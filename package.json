@@ -1,0 +1,14 @@
+{
+  "name": "risk-cards-legacy-js",
+  "version": "1.0.0",
+  "description": "kata",
+  "scripts": {
+    "test": "./node_modules/.bin/mocha ./test/**/*.js",
+    "test:watch": "./node_modules/.bin/mocha ./src/**/*.test.js --watch --reporter min"
+  },
+  "author": "Jeff Langr",
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "mocha": "^5.2.0"
+  }
+}

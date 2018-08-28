@@ -1,332 +1,309 @@
-package cards;
+class ATrader {
+  const trader = new Trader();
+  let bestResult;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+  beforeEach(() => {
+      bestResult = new Card[3];
+  }
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
+  class PopulatesBestResultWith {
+      beforeEach(() => 
+        trader.setCardMode(CARD_INCREASING_SET)
+      );
 
-import static java.util.Arrays.asList;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
-import static cards.Card.CANNON;
-import static cards.Card.CAVALRY;
-import static cards.Card.INFANTRY;
-import static cards.Card.WILDCARD;
+      @Test
+      returnsThreeMatchingWhenOnlyThree() {
+          trader.getBestTrade(cards(CANNON, CANNON, CANNON), bestResult);
 
-public class ATrader {
-    private Trader trader = new Trader();
-    private Card[] bestResult;
+          assertThat(cardTypes(bestResult), is(asList(CANNON, CANNON, CANNON)));
+      }
 
-    @BeforeEach
-    public void initializeBestResult() {
-        bestResult = new Card[3];
-    }
+      @Test
+      returnsThreeMatchingFromLargerHand() {
+          trader.getBestTrade(cards(INFANTRY, CANNON, INFANTRY, CANNON, INFANTRY), bestResult);
 
-    @Nested
-    class PopulatesBestResultWith {
-        @BeforeEach
-        public void createWithArbitraryCardMode() {
-            trader.setCardMode(Trader.CARD_INCREASING_SET);
-        }
+          assertThat(cardTypes(bestResult), is(asList(INFANTRY, INFANTRY, INFANTRY)));
+      }
 
-        @Test
-        public void returnsThreeMatchingWhenOnlyThree() {
-            trader.getBestTrade(cards(CANNON, CANNON, CANNON), bestResult);
+      @Test
+      returnsThreeWithHigherScore() {
+          trader.getBestTrade(cards(INFANTRY, CANNON, INFANTRY, CAVALRY, INFANTRY), bestResult);
 
-            assertThat(cardTypes(bestResult), is(asList(CANNON, CANNON, CANNON)));
-        }
+          assertThat(cardTypes(bestResult), is(asList(CANNON, CAVALRY, INFANTRY)));
+      }
 
-        @Test
-        public void returnsThreeMatchingFromLargerHand() {
-            trader.getBestTrade(cards(INFANTRY, CANNON, INFANTRY, CANNON, INFANTRY), bestResult);
+      @Test
+      order1() {
+          trader.getBestTrade(uniqueCards(
+                  INFANTRY, 0,
+                  CANNON, 1,
+                  INFANTRY, 2,
+                  INFANTRY, 3,
+                  CAVALRY, 4), bestResult);
 
-            assertThat(cardTypes(bestResult), is(asList(INFANTRY, INFANTRY, INFANTRY)));
-        }
+          assertThat(cardIds(bestResult),
+                  is(asList(1, 4, 0)));
+      }
 
-        @Test
-        public void returnsThreeWithHigherScore() {
-            trader.getBestTrade(cards(INFANTRY, CANNON, INFANTRY, CAVALRY, INFANTRY), bestResult);
+      @Test
+      order2() {
+          trader.getBestTrade(uniqueCards(
+                  CAVALRY, 0,
+                  CANNON, 1,
+                  CANNON, 2,
+                  CAVALRY, 3,
+                  CAVALRY, 4), bestResult);
 
-            assertThat(cardTypes(bestResult), is(asList(CANNON, CAVALRY, INFANTRY)));
-        }
+          assertThat(cardIds(bestResult),
+                  is(asList(0, 3, 4)));
+      }
 
-        @Test
-        public void order1() {
-            trader.getBestTrade(uniqueCards(
-                    INFANTRY, 0,
-                    CANNON, 1,
-                    INFANTRY, 2,
-                    INFANTRY, 3,
-                    CAVALRY, 4), bestResult);
+      @Test
+      order3WithOneWildcard() {
+          trader.getBestTrade(uniqueCards(
+                  CAVALRY, 0,
+                  CANNON, 1,
+                  CANNON, 2,
+                  WILDCARD, 3), bestResult);
 
-            assertThat(cardIds(bestResult),
-                    is(asList(1, 4, 0)));
-        }
+          assertThat(cardIds(bestResult),
+                  is(asList(1, 0, 3)));
+      }
 
-        @Test
-        public void order2() {
-            trader.getBestTrade(uniqueCards(
-                    CAVALRY, 0,
-                    CANNON, 1,
-                    CANNON, 2,
-                    CAVALRY, 3,
-                    CAVALRY, 4), bestResult);
+      @Test
+      order3WithTwoWildcards() {
+          trader.getBestTrade(uniqueCards(
+                  CAVALRY, 0,
+                  WILDCARD, 1,
+                  INFANTRY, 2,
+                  WILDCARD, 3), bestResult);
 
-            assertThat(cardIds(bestResult),
-                    is(asList(0, 3, 4)));
-        }
+          assertThat(cardIds(bestResult),
+                  is(asList(1, 0, 2)));
+      }
 
-        @Test
-        public void order3WithOneWildcard() {
-            trader.getBestTrade(uniqueCards(
-                    CAVALRY, 0,
-                    CANNON, 1,
-                    CANNON, 2,
-                    WILDCARD, 3), bestResult);
+      @Test
+      doesNotPopulateBestResultWhenInsufficientCards() {
+          int armies = trader.getBestTrade(cards(INFANTRY), bestResult);
 
-            assertThat(cardIds(bestResult),
-                    is(asList(1, 0, 3)));
-        }
+          assertThat(armies, is(equalTo(0)));
+      }
 
-        @Test
-        public void order3WithTwoWildcards() {
-            trader.getBestTrade(uniqueCards(
-                    CAVALRY, 0,
-                    WILDCARD, 1,
-                    INFANTRY, 2,
-                    WILDCARD, 3), bestResult);
+      @Test
+      doesNotPopulateBestResultWhenNoMatch() {
+          int armies = trader.getBestTrade(cards(INFANTRY, CAVALRY, INFANTRY, CAVALRY), bestResult);
 
-            assertThat(cardIds(bestResult),
-                    is(asList(1, 0, 2)));
-        }
+          assertThat(armies, is(equalTo(0)));
+      }
+  }
 
-        @Test
-        public void doesNotPopulateBestResultWhenInsufficientCards() {
-            int armies = trader.getBestTrade(cards(INFANTRY), bestResult);
+  @Nested
+  class InFixedSetMode {
+      @BeforeEach
+      create() {
+          trader.setCardMode(Trader.CARD_FIXED_SET);
+      }
 
-            assertThat(armies, is(equalTo(0)));
-        }
+      @Test
+      choosesHigherPoints() {
+          int armies = trader.getBestTrade(uniqueCards(
+                  CAVALRY, 0,
+                  INFANTRY, 1,
+                  INFANTRY, 2,
+                  INFANTRY, 3,
+                  CAVALRY, 4,
+                  CAVALRY, 5), bestResult);
 
-        @Test
-        public void doesNotPopulateBestResultWhenNoMatch() {
-            int armies = trader.getBestTrade(cards(INFANTRY, CAVALRY, INFANTRY, CAVALRY), bestResult);
+          assertThat(armies, is(equalTo(6)));
+          assertThat(cardIds(bestResult),
+                  is(asList(0, 4, 5)));
+      }
 
-            assertThat(armies, is(equalTo(0)));
-        }
-    }
+      @Test
+      armiesIs6ForCavalrySet() {
+          int armies = trader.getBestTrade(cards(CAVALRY, CAVALRY, CAVALRY), bestResult);
+          assertThat(armies, is(equalTo(6)));
+      }
 
-    @Nested
-    class InFixedSetMode {
-        @BeforeEach
-        public void create() {
-            trader.setCardMode(Trader.CARD_FIXED_SET);
-        }
+      @Test
+      armiesIs4ForInfantrySet() {
+          int armies = trader.getBestTrade(cards(INFANTRY, INFANTRY, INFANTRY), bestResult);
+          assertThat(armies, is(equalTo(4)));
+      }
 
-        @Test
-        public void choosesHigherPoints() {
-            int armies = trader.getBestTrade(uniqueCards(
-                    CAVALRY, 0,
-                    INFANTRY, 1,
-                    INFANTRY, 2,
-                    INFANTRY, 3,
-                    CAVALRY, 4,
-                    CAVALRY, 5), bestResult);
+      @Test
+      armiesIs8ForCannonSet() {
+          int armies = trader.getBestTrade(cards(CANNON, CANNON, CANNON), bestResult);
+          assertThat(armies, is(equalTo(8)));
+      }
 
-            assertThat(armies, is(equalTo(6)));
-            assertThat(cardIds(bestResult),
-                    is(asList(0, 4, 5)));
-        }
+      @Test
+      allCardsDifferentWithWildcard() {
+          int armies = trader.getBestTrade(cards(WILDCARD, INFANTRY, CANNON), bestResult);
+          assertThat(armies, is(equalTo(10)));
+      }
 
-        @Test
-        public void armiesIs6ForCavalrySet() {
-            int armies = trader.getBestTrade(cards(CAVALRY, CAVALRY, CAVALRY), bestResult);
-            assertThat(armies, is(equalTo(6)));
-        }
+      @Test
+      allCardsDifferent() {
+          int armies = trader.getBestTrade(cards(CAVALRY, INFANTRY, CANNON), bestResult);
+          assertThat(armies, is(equalTo(10)));
+      }
 
-        @Test
-        public void armiesIs4ForInfantrySet() {
-            int armies = trader.getBestTrade(cards(INFANTRY, INFANTRY, INFANTRY), bestResult);
-            assertThat(armies, is(equalTo(4)));
-        }
+      @Test
+      twoWildcardsTreatedAsAllDifferent() {
+          int armies = trader.getBestTrade(cards(CANNON, WILDCARD, WILDCARD), bestResult);
+          assertThat(armies, is(equalTo(10)));
+      }
 
-        @Test
-        public void armiesIs8ForCannonSet() {
-            int armies = trader.getBestTrade(cards(CANNON, CANNON, CANNON), bestResult);
-            assertThat(armies, is(equalTo(8)));
-        }
+      @Test
+      threeWildcardsNotReallyPossible() {
+          int armies = trader.getBestTrade(cards(WILDCARD, WILDCARD, WILDCARD), bestResult);
+          assertThat(armies, is(equalTo(12)));
+      }
+  }
 
-        @Test
-        public void allCardsDifferentWithWildcard() {
-            int armies = trader.getBestTrade(cards(WILDCARD, INFANTRY, CANNON), bestResult);
-            assertThat(armies, is(equalTo(10)));
-        }
+  @Nested
+  class InItalianMode {
+      @BeforeEach
+      create() {
+          trader.setCardMode(Trader.CARD_ITALIANLIKE_SET);
+      }
 
-        @Test
-        public void allCardsDifferent() {
-            int armies = trader.getBestTrade(cards(CAVALRY, INFANTRY, CANNON), bestResult);
-            assertThat(armies, is(equalTo(10)));
-        }
+      @Test
+      allTheSameCavalry() {
+          int armies = trader.getBestTrade(cards(CAVALRY, CAVALRY, CAVALRY), bestResult);
+          assertThat(armies, is(equalTo(8)));
+      }
 
-        @Test
-        public void twoWildcardsTreatedAsAllDifferent() {
-            int armies = trader.getBestTrade(cards(CANNON, WILDCARD, WILDCARD), bestResult);
-            assertThat(armies, is(equalTo(10)));
-        }
+      @Test
+      allTheSameInfantry() {
+          int armies = trader.getBestTrade(cards(INFANTRY, INFANTRY, INFANTRY), bestResult);
+          assertThat(armies, is(equalTo(6)));
+      }
 
-        @Test
-        public void threeWildcardsNotReallyPossible() {
-            int armies = trader.getBestTrade(cards(WILDCARD, WILDCARD, WILDCARD), bestResult);
-            assertThat(armies, is(equalTo(12)));
-        }
-    }
+      @Test
+      allTheSameCannon() {
+          int armies = trader.getBestTrade(cards(CANNON, CANNON, CANNON), bestResult);
+          assertThat(armies, is(equalTo(4)));
+      }
 
-    @Nested
-    class InItalianMode {
-        @BeforeEach
-        public void create() {
-            trader.setCardMode(Trader.CARD_ITALIANLIKE_SET);
-        }
+      @Test
+      allTheSameWildcard() {
+          int armies = trader.getBestTrade(cards(WILDCARD, WILDCARD, WILDCARD), bestResult);
+          assertThat(armies, is(equalTo(0)));
+      }
 
-        @Test
-        public void allTheSameCavalry() {
-            int armies = trader.getBestTrade(cards(CAVALRY, CAVALRY, CAVALRY), bestResult);
-            assertThat(armies, is(equalTo(8)));
-        }
+      @Test
+      allTheSameWithOneWildcard() {
+          int armies = trader.getBestTrade(cards(WILDCARD, CANNON, CANNON), bestResult);
+          assertThat(armies, is(equalTo(12)));
+      }
 
-        @Test
-        public void allTheSameInfantry() {
-            int armies = trader.getBestTrade(cards(INFANTRY, INFANTRY, INFANTRY), bestResult);
-            assertThat(armies, is(equalTo(6)));
-        }
+      @Test
+      twoWildcardsApparentlySuck() {
+          int armies = trader.getBestTrade(cards(WILDCARD, WILDCARD, CANNON), bestResult);
+          assertThat(armies, is(equalTo(0)));
+      }
 
-        @Test
-        public void allTheSameCannon() {
-            int armies = trader.getBestTrade(cards(CANNON, CANNON, CANNON), bestResult);
-            assertThat(armies, is(equalTo(4)));
-        }
+      @Test
+      choosesHigherPoints() {
+          int armies = trader.getBestTrade(uniqueCards(
+                  CAVALRY, 0,
+                  INFANTRY, 1,
+                  INFANTRY, 2,
+                  INFANTRY, 3,
+                  CAVALRY, 4,
+                  CAVALRY, 5), bestResult);
 
-        @Test
-        public void allTheSameWildcard() {
-            int armies = trader.getBestTrade(cards(WILDCARD, WILDCARD, WILDCARD), bestResult);
-            assertThat(armies, is(equalTo(0)));
-        }
+          assertThat(armies, is(equalTo(8)));
+          assertThat(cardIds(bestResult),
+                  is(asList(0, 4, 5)));
+      }
+  }
 
-        @Test
-        public void allTheSameWithOneWildcard() {
-            int armies = trader.getBestTrade(cards(WILDCARD, CANNON, CANNON), bestResult);
-            assertThat(armies, is(equalTo(12)));
-        }
+  @Nested
+  class InIncreasingMode {
+      @BeforeEach
+      create() {
+          trader.setCardMode(Trader.CARD_INCREASING_SET);
+      }
 
-        @Test
-        public void twoWildcardsApparentlySuck() {
-            int armies = trader.getBestTrade(cards(WILDCARD, WILDCARD, CANNON), bestResult);
-            assertThat(armies, is(equalTo(0)));
-        }
+      @Test
+      increasesBy4WhenStateUnder4() {
+          trader.setCardState(0);
 
-        @Test
-        public void choosesHigherPoints() {
-            int armies = trader.getBestTrade(uniqueCards(
-                    CAVALRY, 0,
-                    INFANTRY, 1,
-                    INFANTRY, 2,
-                    INFANTRY, 3,
-                    CAVALRY, 4,
-                    CAVALRY, 5), bestResult);
+          int armies = trader.getBestTrade(cards(CANNON, CANNON, CANNON), bestResult);
 
-            assertThat(armies, is(equalTo(8)));
-            assertThat(cardIds(bestResult),
-                    is(asList(0, 4, 5)));
-        }
-    }
+          assertThat(armies, is(equalTo(0 + 4)));
+      }
 
-    @Nested
-    class InIncreasingMode {
-        @BeforeEach
-        public void create() {
-            trader.setCardMode(Trader.CARD_INCREASING_SET);
-        }
+      @Test
+      increasesBy2WhenStateUnder12() {
+          trader.setCardState(4);
 
-        @Test
-        public void increasesBy4WhenStateUnder4() {
-            trader.setCardState(0);
+          int armies = trader.getBestTrade(cards(INFANTRY, INFANTRY, INFANTRY), bestResult);
 
-            int armies = trader.getBestTrade(cards(CANNON, CANNON, CANNON), bestResult);
+          assertThat(armies, is(equalTo(4 + 2)));
+      }
 
-            assertThat(armies, is(equalTo(0 + 4)));
-        }
+      @Test
+      increasesBy3WhenStateUnder15() {
+          trader.setCardState(14);
 
-        @Test
-        public void increasesBy2WhenStateUnder12() {
-            trader.setCardState(4);
+          int armies = trader.getBestTrade(cards(INFANTRY, INFANTRY, INFANTRY), bestResult);
 
-            int armies = trader.getBestTrade(cards(INFANTRY, INFANTRY, INFANTRY), bestResult);
+          assertThat(armies, is(equalTo(14 + 3)));
+      }
 
-            assertThat(armies, is(equalTo(4 + 2)));
-        }
+      @Test
+      increasesBy5WhenState15OrMore() {
+          trader.setCardState(15);
 
-        @Test
-        public void increasesBy3WhenStateUnder15() {
-            trader.setCardState(14);
+          int armies = trader.getBestTrade(cards(INFANTRY, INFANTRY, INFANTRY), bestResult);
 
-            int armies = trader.getBestTrade(cards(INFANTRY, INFANTRY, INFANTRY), bestResult);
+          assertThat(armies, is(equalTo(15 + 5)));
+      }
 
-            assertThat(armies, is(equalTo(14 + 3)));
-        }
+      @Test
+      choosesFirstMatchingTypeSincePointsAreSame() {
+          trader.getBestTrade(uniqueCards(
+                  CAVALRY, 0,
+                  INFANTRY, 1,
+                  INFANTRY, 2,
+                  INFANTRY, 3,
+                  CAVALRY, 4,
+                  CAVALRY, 5), bestResult);
 
-        @Test
-        public void increasesBy5WhenState15OrMore() {
-            trader.setCardState(15);
+          assertThat(cardIds(bestResult),
+                  is(asList(1, 2, 3)));
+      }
+  }
 
-            int armies = trader.getBestTrade(cards(INFANTRY, INFANTRY, INFANTRY), bestResult);
+  private List<String> cardTypes(Card[] cards) {
+      return Arrays.stream(cards)
+              .map(c -> c.getType())
+              .collect(Collectors.toList());
+  }
 
-            assertThat(armies, is(equalTo(15 + 5)));
-        }
+  private List<Integer> cardIds(Card[] cards) {
+      return Arrays.stream(cards)
+              .map(c -> c.getCountryIndex())
+              .collect(Collectors.toList());
+  }
 
-        @Test
-        public void choosesFirstMatchingTypeSincePointsAreSame() {
-            trader.getBestTrade(uniqueCards(
-                    CAVALRY, 0,
-                    INFANTRY, 1,
-                    INFANTRY, 2,
-                    INFANTRY, 3,
-                    CAVALRY, 4,
-                    CAVALRY, 5), bestResult);
+  private List<Card> cards(String... cards) {
+      return Arrays.stream(cards)
+              .map(c -> new Card(c))
+              .collect(Collectors.toList());
+  }
 
-            assertThat(cardIds(bestResult),
-                    is(asList(1, 2, 3)));
-        }
-    }
-
-    private List<String> cardTypes(Card[] cards) {
-        return Arrays.stream(cards)
-                .map(c -> c.getType())
-                .collect(Collectors.toList());
-    }
-
-    private List<Integer> cardIds(Card[] cards) {
-        return Arrays.stream(cards)
-                .map(c -> c.getCountryIndex())
-                .collect(Collectors.toList());
-    }
-
-    private List<Card> cards(String... cards) {
-        return Arrays.stream(cards)
-                .map(c -> new Card(c))
-                .collect(Collectors.toList());
-    }
-
-    private List<Card> uniqueCards(Object... cardsAndIds) {
-        List<Card> results = new ArrayList<>();
-        for (int i = 0; i < cardsAndIds.length; i += 2) {
-            String type = (String)cardsAndIds[i];
-            int id = (Integer)cardsAndIds[i + 1];
-            results.add(new Card(type, id));
-        }
-        return results;
-    }
+  private List<Card> uniqueCards(Object... cardsAndIds) {
+      List<Card> results = new ArrayList<>();
+      for (int i = 0; i < cardsAndIds.length; i += 2) {
+          String type = (String)cardsAndIds[i];
+          int id = (Integer)cardsAndIds[i + 1];
+          results.add(new Card(type, id));
+      }
+      return results;
+  }
 }
