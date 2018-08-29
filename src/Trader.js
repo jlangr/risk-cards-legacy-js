@@ -1,10 +1,13 @@
-class Trader {
-  const CARD_INCREASING_SET = 0;
-  const CARD_FIXED_SET = 1;
-  const CARD_ITALIANLIKE_SET = 2;
+import { CANNON, CAVALRY, INFANTRY, WILDCARD } from './Card';
 
-  // private int cardState;
-  // private int cardMode;
+export const CARD_INCREASING_SET = 0;
+export const CARD_FIXED_SET = 1;
+export const CARD_ITALIANLIKE_SET = 2;
+
+class Trader {
+  constructor() { 
+    this.cardState = 0; 
+  }
 
   getBestTrade(cards, bestResult) {
     let cardTypes = {};
@@ -28,7 +31,8 @@ class Trader {
     let cardc = undefined;
 
     let bestValue = 0;
-    if (cardTypes.length >= 3) {
+
+    if (Object.keys(cardTypes).length >= 3) { // at least 3 diff types
       carda = type3 ? type3[0] : undefined;
       if (!carda) {
         const type = cardTypes[WILDCARD];
@@ -39,17 +43,17 @@ class Trader {
         const type = cardTypes[WILDCARD];
         cardb = type ? type[0] : undefined;
       }
-      cardc = type1 ? type1.get(0) : undefined;
+      cardc = type1 ? type1[0] : undefined;
       if (!cardc) {
         const type = cardTypes[WILDCARD];
-        cardc = type ? type.get(0) : undefined;
+        cardc = type ? type[0] : undefined;
       }
 
       let c1 = carda.type;
       let c2 = cardb.type;
       let c3 = cardc.type;
 
-      let cardMode1 = cardMode;
+      let cardMode1 = this.cardMode;
       let armies = 0;
 
       // we shift all wildcards to the front
@@ -71,42 +75,42 @@ class Trader {
 
       if (cardMode1 === CARD_INCREASING_SET) {
         if (c1 === WILDCARD ||
-            (c1.equals(c2) && c1.equals(c3)) ||
-            (!c1.equals(c2) && !c1.equals(c3) && !c2.equals(c3))) {
+            (c1 === c2 && c1 === c3) ||
+            (c1 !== c2 && c1 !== c3 && c2 !== c3)) {
           let result;
 
-          if (cardState < 4) {
-              result = cardState + 4;
-          } else if (cardState < 12) {
-              result = cardState + 2;
-          } else if (cardState < 15) {
-              result = cardState + 3;
+          if (this.cardState < 4) {
+              result = this.cardState + 4;
+          } else if (this.cardState < 12) {
+              result = this.cardState + 2;
+          } else if (this.cardState < 15) {
+              result = this.cardState + 3;
           } else {
-              result = cardState + 5;
+              result = this.cardState + 5;
           }
 
           armies = result;
         }
       } else if (cardMode1 === CARD_FIXED_SET) {
         // ALL THE SAME or 'have 1 wildcard and 2 the same'
-        if ((c1.equals(c2) || c1 === WILDCARD && c2.equals(c3)) {
+        if ((c1 === c2 || c1 === WILDCARD) && c2 === c3) {
           if (c3 === INFANTRY) {
             armies = 4;
           } else if (c3 === CAVALRY) {
             armies = 6;
           } else if (c3 === CANNON) {
             armies = 8;
-          } else { // (c1.equals( WILDCARD ))
+          } else { // c1 === WILDCARD
             armies = 12; // Incase someone puts 3 wildcards into his set
           }
         }
         // ALL CARDS ARE DIFFERENT (can have 1 wildcard) or 2 wildcards and a 3rd card
         else if ((c1 === WILDCARD && c2 === WILDCARD) ||
-                (!c1.equals(c2) && !c2.equals(c3) && !c1.equals(c3))) {
+                (c1 !== c2 && c2 !== c3 && c1 !== c3)) {
           armies = 10;
         }
       } else { // (cardMode==CARD_ITALIANLIKE_SET)
-        if (c1.equals(c2) && c1.equals(c3)) {
+        if (c1 === c2 && c1 === c3) {
           // All equal
           if (c1 === CAVALRY) {
             armies = 8;
@@ -117,11 +121,11 @@ class Trader {
           } else { // c1 ===  WILDCARD
             armies = 0; // Incase someone puts 3 wildcards into his set
           }
-        } else if (!c1.equals(c2) && !c2.equals(c3) && !c1.equals(c3) && !c1 === WILDCARD) {
+        } else if (c1 !== c2 && c2 !== c3 && c1 !== c3 && c1 !== WILDCARD) {
           armies = 10;
         }
         //All the same w/1 wildcard
-        else if (c1 === WILDCARD && c2.equals(c3)) {
+        else if (c1 === WILDCARD && c2 === c3) {
           armies = 12;
         }
         //2 wildcards, or a wildcard and two different
@@ -141,27 +145,27 @@ class Trader {
     }
     let wildCards = cardTypes[WILDCARD];
     let wildCardCount = !wildCards ? 0 : wildCards.length;
-    for (Map.Entry<String, List<Card>> entry : cardTypes.entrySet()) {
+    Object.keys(cardTypes).forEach(cardType => {
+      const cardsForType = cardTypes[cardType];
       carda = undefined;
-      if (entry.getKey() === WILDCARD) {
+      if (cardType === WILDCARD) {
         if (wildCardCount >= 3) {
           carda = wildCards[0];
           cardb = wildCards[1];
           cardc = wildCards[2];
         }
       } else {
-        List<Card> cardList = entry.getValue();
-        if (cardList.length + wildCardCount >= 3) {
-          carda = cardList[0];
-          cardb = cardList.length > 1 ? cardList[1] : wildCards[0];
-          cardc = cardList.length > 2 ? cardList[2] : wildCards[2 - cardList.length];
+        if (cardsForType.length + wildCardCount >= 3) {
+          carda = cardsForType[0];
+          cardb = cardsForType.length > 1 ? cardsForType[1] : wildCards[0];
+          cardc = cardsForType.length > 2 ? cardsForType[2] : wildCards[2 - cardsForType.length];
         }
       }
       if (carda) {
         let c1 = carda.type;
         let c2 = cardb.type;
         let c3 = cardc.type;
-        let cardMode1 = cardMode;
+        let cardMode1 = this.cardMode;
         let armies = 0;
 
         // we shift all wildcards to the front
@@ -181,27 +185,29 @@ class Trader {
           c1 = n4;
         }
 
+
         if (cardMode1 == CARD_INCREASING_SET) {
+
           if (c1 === WILDCARD ||
-              (c1.equals(c2) && c1.equals(c3)) ||
-              (!c1.equals(c2) && !c1.equals(c3) && !c2.equals(c3))) {
+              (c1 === c2 && c1 === c3) ||
+              (c1 !== c2 && c1 !== c3 && c2 !== c3)) {
             let result;
 
-            if (cardState < 4) {
-              result = cardState + 4;
-            } else if (cardState < 12) {
-              result = cardState + 2;
-            } else if (cardState < 15) {
-              result = cardState + 3;
+            if (this.cardState < 4) {
+              result = this.cardState + 4;
+            } else if (this.cardState < 12) {
+              result = this.cardState + 2;
+            } else if (this.cardState < 15) {
+              result = this.cardState + 3;
             } else {
-              result = cardState + 5;
+              result = this.cardState + 5;
             }
 
             armies = result;
           }
         } else if (cardMode1 === CARD_FIXED_SET) {
           // ALL THE SAME or 'have 1 wildcard and 2 the same'
-          if ((c1.equals(c2) || c1 === WILDCARD) && c2.equals(c3)) {
+          if ((c1 === c2 || c1 === WILDCARD) && c2 === c3) {
             if (c3 === INFANTRY) {
               armies = 4;
             } else if (c3 === CAVALRY) {
@@ -214,26 +220,26 @@ class Trader {
           }
           // ALL CARDS ARE DIFFERENT (can have 1 wildcard) or 2 wildcards and a 3rd card
           else if ((c1 === WILDCARD && c2 === WILDCARD) ||
-            (!c1.equals(c2) && !c2.equals(c3) && !c1.equals(c3))) {
+            (!c1 !== c2 && !c2 !== c3 && !c1 !== c3)) {
             armies = 10;
           }
         } else { // (cardMode===CARD_ITALIANLIKE_SET)
-            if (c1.equals(c2) && c1.equals(c3)) {
+            if (c1 === c2 && c1 === c3) {
               // All equal
-              if (c1 === CAVALRY)) {
+              if (c1 === CAVALRY) {
                 armies = 8;
-              } else if (c1 === INFANTRY)) {
+              } else if (c1 === INFANTRY) {
                 armies = 6;
-              } else if (c1 === CANNON)) {
+              } else if (c1 === CANNON) {
                 armies = 4;
               } else { // c1 ===  WILDCARD
                 armies = 0; // Incase someone puts 3 wildcards into his set
               }
-            } else if (!c1.equals(c2) && !c2.equals(c3) && !c1.equals(c3) && !c1 === WILDCARD)) {
+            } else if (c1 !== c2 && c2 !== c3 && c1 !== c3 && !c1 === WILDCARD) {
               armies = 10;
             }
             //All the same w/1 wildcard
-            else if (c1 === WILDCARD && c2.equals(c3)) {
+            else if (c1 === WILDCARD && c2 === c3) {
               armies = 12;
             }
             //2 wildcards, or a wildcard and two different
@@ -252,7 +258,7 @@ class Trader {
           bestResult[2] = cardc;
         }
       }
-    }
+    });
     return bestValue;
   }
 
@@ -266,3 +272,5 @@ class Trader {
     this.cardState = cardState;
   }
 }
+
+export default Trader;

@@ -1,14 +1,17 @@
 {
   "name": "risk-cards-legacy-js",
   "version": "1.0.0",
-  "description": "kata",
   "scripts": {
-    "test": "./node_modules/.bin/mocha ./test/**/*.js",
-    "test:watch": "./node_modules/.bin/mocha ./src/**/*.test.js --watch --reporter min"
+    "test": "./node_modules/.bin/mocha --require babel-core/register --require babel-polyfill ./src/**/*.test.js",
+    "test:watch": "./node_modules/.bin/mocha --require babel-core/register --require babel-polyfill ./src/**/*.test.js --watch --reporter min"
   },
-  "author": "Jeff Langr",
   "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-preset-env": "^1.7.0",
     "chai": "^4.1.2",
     "mocha": "^5.2.0"
+  },
+  "dependencies": {
+    "babel-polyfill": "^6.26.0"
   }
 }
